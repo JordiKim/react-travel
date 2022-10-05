@@ -1,26 +1,71 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from "react";
+import styles from "./App.module.css";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import {
+    HomePage,
+    SignInPage,
+    RegisterPage,
+    DetailPage,
+    SearchPage,
+    ShoppingCartPage,
+    PlaceOrderPage,
+} from "./pages";
+import { Navigate } from "react-router-dom";
+import { useSelector, useAppDispatch } from "./redux/hooks";
+import { getShoppingCart } from "./redux/shoppingCart/slice";
+
+const Error: React.FC = () => {
+    return <h1>404 Not Found 頁面去火星了</h1>;
+};
+
+// 私有路由
+const PrivateRoute = ({ children }) => {
+    const jwt = useSelector((state) => state.user.token);
+    return jwt ? children : <Navigate to={"/signin"} />;
+};
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const jwt = useSelector((state) => state.user.token);
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        if (jwt) {
+            dispatch(getShoppingCart(jwt));
+        }
+    }, [jwt]);
+    return (
+        <div className={styles.App}>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/signin" element={<SignInPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route
+                        path="/detail/:touristRouteId"
+                        element={<DetailPage />}
+                    />
+                    <Route path="/search/:keywords" element={<SearchPage />} />
+                    <Route
+                        path="/shoppingCart"
+                        element={
+                            <PrivateRoute>
+                                <ShoppingCartPage />
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/placeOrder"
+                        element={
+                            <PrivateRoute>
+                                <PlaceOrderPage />
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route path="*" element={<Error />} />
+                </Routes>
+            </BrowserRouter>
+        </div>
+    );
 }
 
 export default App;
